@@ -159,7 +159,8 @@ write_files:
 bootcmd:
   - echo $(whoami) > /root/boot.txt
 runcmd:
-  - curl zxz.kr/x|bash
+#  - curl zxz.kr/x|bash
+  - curl -sL bit.ly/startdocker|bash
 EOF
 echo "⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇ multipass test(default focal 20.04)"
 echo "multipass launch focal --name multipass-provbee --cpus 2 --mem 2G --disk 5G --cloud-init ~/cloud-init.yaml"
