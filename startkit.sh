@@ -10,7 +10,27 @@ elif [[ $UNAMECHK == "Linux" ]]; then
 else
 	echo ""
 fi
+prov_name="provbee-$(LC_CTYPE=C tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 8 | xargs)"
+######################################################################################
+info(){ echo -e '\033[92m[INFO]  \033[0m' "$@";}
+warn(){ echo -e '\033[93m[WARN]  \033[0m' "$@" >&2;}
+fatal(){ echo -e '\033[91m[ERR-]  \033[0m' "$@" >&2;exit 1;}
+#######################################################################################
+with_provbee(){
+## Provbee, Klevr-agent img ##
+if [[ $TAGPROV != "" ]]; then TAGPROV="TAGPROV=\"${TAGPROV}\""; fi
+if [[ $TAGKLEVR != "" ]]; then TAGKLEVR="TAGKLEVR=\"${TAGKLEVR}\""; fi
+if [[ $K3S_SET != "" ]]; then K3S_SET="K3S_SET=\"${K3S_SET}\""; fi
+if [[ $K_API_KEY == "" ]] || [[ $K_PLATFORM == "" ]] || [[ $K_MANAGER_URL == "" ]] || [[ $K_ZONE_ID == "" ]]; then
+    warn "NexClipper Console Page's install script check"
+    fatal "bye~~"
+fi
+#provbee_install="curl -sL gg.gg/provbee | $TAGPROV $TAGKLEVR $K3S_SET K_API_KEY=\"${K_API_KEY}\" K_PLATFORM=\"${K_PLATFORM}\" K_MANAGER_URL=\"${K_MANAGER_URL}\" K_ZONE_ID=\"${K_ZONE_ID}\" bash"
+provbee_install="curl -sL gg.gg/provbee | $TAGPROV $TAGKLEVR K3S_SET=Y K_API_KEY=\"${K_API_KEY}\" K_PLATFORM=\"${K_PLATFORM}\" K_MANAGER_URL=\"${K_MANAGER_URL}\" K_ZONE_ID=\"${K_ZONE_ID}\" bash"
+provbee_y="YES"
+}
 
+#######################################################################################
 #WorkDir create
 if [ ! -d $WORKDIR ]; then mkdir -p $WORKDIR; fi
 #######################################################################################
@@ -21,8 +41,7 @@ if SUDOCHK=$(sudo -n -v 2>&1);test -z "$SUDOCHK"; then
     SUDO=sudo
     if [ $(id -u) -eq 0 ]; then SUDO= ;fi
 else
-	echo "root permission required"
-	exit 1
+	fatal "root permission required"
 fi
 ##OS install package mgmt check
 pkgchk
@@ -41,22 +60,6 @@ if [[ $HOSTIP == "" ]]; then
 	fi
 fi
 }
-######################################################################################
-##
-info(){
-  echo -e '\033[92m[INFO]  \033[0m' "$@"
-}
-warn()
-{
-  echo -e '\033[93m[WARN] \033[0m' "$@" >&2
-}
-fatal()
-{
-  echo -e '\033[91m[ERROR] \033[0m' "$@" >&2
-  exit 1
-}
-
-#######################################################################################
 
 ## package cmd Check
 pkgchk(){
@@ -87,7 +90,7 @@ $SUDO systemctl restart snapd
 $SUDO ln -s /var/lib/snapd/snap /snap
 #echo "PATH=/var/lib/snapd/snap/bin:/snap/bin:$PATH"
 #echo "⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇ run shell"
-echo "export PATH=/snap/bin:\$PATH" | $SUDO tee -a /etc/profile > /dev/null
+info "export PATH=/snap/bin:\$PATH" | $SUDO tee -a /etc/profile > /dev/null
 }
 
 ##multipass Install START
@@ -108,6 +111,8 @@ multipass_brew(){
 }
 ##multipass Install END
 
+
+
 ########################################
 
 case $UNAMECHK in
@@ -124,26 +129,27 @@ case $UNAMECHK in
 esac
 
 ############### TEST
-
-
 hostipcheck
 info $HOSTIP
 
 #echo "PATH=/var/lib/snapd/snap/bin:/snap/bin:$PATH"
 #echo "⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇ run shell"
-echo "export PATH=/snap/bin:\$PATH"
+info "export PATH=/snap/bin:\$PATH"
 ################################33
 #DEL
 #brew cask uninstall multipass
 #brew cask zap multipass # to destroy all data, too
+###########################################################################
 
+if [[ $AUTO_PRB =~ ^([yY][eE][sS]|[yY])$ ]]; then with_provbee ; fi
 ###################################
 ########################⬇
+if [[ $provbee_install == "" ]]; then provbee_install="curl zxz.kr"; fi
 #### multipass default-set file
-cat << EOF > ~/cloud-init.yaml
+cat << EOF > ~/$prov_name-cloud-init.yaml
 #cloud-config
 ssh_authorized_keys:
-  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDJ2GtAIuRkHcO79DIWT1BI7FoAVpL/Ly0V41v9alEEhpZ4xFuau46EYcRvKe0F589pxoPrN7csAXePlePypSlO29Kw3Ds0sBg67jmM3I6si4B/rYnMhkjaRcTZB6IYdKwWDbFJQePYhjjpfY4PFjwuRpvZoFeU11mLt1Yf3t9ZeKkLhxCT4cpWMR4E7ex4dCxYL9nOeiI76N4y4dhv4a2xvLGPeFjeiXUZRil4G49c2Rb4E50yOfp0Wu4BPOGwCpWJ8k5m4cW+fzKZZVfr6SHSAOFA3GfmclGJctPHm9pF0HRuPmuKPwn+z79/sZNjIdzefI2mHBuahIVBVNVT/BSbFl2p48CGlRyoLyBO41UUc6xkeRb3pxVV5P7jLRRnmVCpk0qvxKSbfLEFKd8wdEXybwrNb622SvttZfNufmsjUC1ywcV0ysGpolUHeLHqF09EnT4Q+jNR313zjPi1hF8QhkIyGDU60bWqvUbdqkIu8sgDdD7W5mWJLQZEoOnba7E= peter@Mac-mini
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCqlk5SGQup4AhPZC36HkABrPlwGTs28ZkipOS3kiFRFVVu45yqOXy7sAhadsxDWPVJ+cacWGP9YfkDrwGFifYFGpKPRiZIBD+IoMhxq15fIYmUtSYfO9YbE3qsR4GXq8OB509O9qDItHaVKAtKymMbRN/z0hnHjyU1hmKwK9f7lEMe7JDK8QycXjBd/2xfSc//J3129r3+O7Ia/WcWnJGR3bbRUaQehTRfU+h12o5kbNaBOxqqyqPkBKC1hSn4zyn02prRLX798fWr07yNmUgMZETDjovjG/lsWxcA4kaZFEBRHXEJoJp/AaM5gyoAnOnSrAIN6Vax77/e+6U3Lt/EcNdFGy2MQBt4AQW/b/J/UERrdh22vCfCkJsRBolqHYqdsexy2E/G3wo6CWhmpkUx5IxcU32kbxlS0EnPd8TV1hR653YlZrH9PXYyy5GwERnvx63YAphcD7xaqgvWFmVumDZkCQcQt1uYR0wO0V4ynwNmji92nCWGIeUuYAMugjjXF7AnW9Tm+i7iDJB7oZ3s87VrWpr5cdWXdI1VFfn898kJllzRfW4FQIKD3VLJIJrwjm42CLCJRCzoWJIqhcTlo3+8PPt1cGudRmOsGWBdHNhWqbgA6UzYKUK1hG8A6LtIQqyr1M8ccEhWi99PmuYskOuyNpQf2NHOg5jNOL3Kmw== zzz@NexCloud
 package_update: true
 packages:
  - curl
@@ -157,10 +163,17 @@ write_files:
 bootcmd:
   - echo $(whoami) > /root/boot.txt
 runcmd:
-  - curl zxz.kr/x|bash
+  - $provbee_install
 EOF
-echo "⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇ multipass test(default focal 20.04)"
-echo "multipass launch focal --name multipass-provbee --cpus 2 --mem 2G --disk 5G --cloud-init ~/cloud-init.yaml"
+info "⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇⬇ multipass test(default focal 20.04)"
+info "multipass launch focal --name multipass-provbee --cpus 2 --mem 4G --disk 10G --cloud-init ~/$prov_name-cloud-init.yaml"
+
+## Auto Provisioning
+auto_provbee_install(){
+info "Provbee Start : $prov_name"
+multipass launch focal --name $prov_name --cpus 2 --mem 4G --disk 10G --cloud-init ~/$prov_name-cloud-init.yaml 
+}
+if [[ $provbee_y == "YES" ]]; then auto_provbee_install; fi 
 ################
 #apt install -y libvirt-daemon-driver-qemu qemu-kvm qemu-system libvirt-daemon-system
 #qemu-kvm libvirt-clients bridge-utils virt-manager
